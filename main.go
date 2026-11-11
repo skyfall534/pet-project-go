@@ -10,7 +10,11 @@ import (
 
 type Product struct {
 	Name string `json:"name"`
+	Description string `json:"description"`
+	ID string `json:"id"`
 }
+
+var products = []Product{{Name: "apple", Description: "its an apple", ID: "1"}}
 
 func main () {
 	r := chi.NewRouter();
@@ -20,13 +24,34 @@ func main () {
 	}) 
 	r.Get("/products", func(w http.ResponseWriter, r *http.Request) {
 		// var products = []string{"apple", "banana", "pineapple"}
-		var products = Product{Name: "apple"}
 		marshalProducts, err := json.Marshal(products)
 		if err != nil {
 
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(marshalProducts)
+	})
+	r.Put("/product/{id}", func (w http.ResponseWriter, r *http.Request) {
+		productId := chi.URLParam(r, "id")
+		var newProduct Product
+		err := json.NewDecoder(r.Body).Decode(&newProduct)
+		if err != nil {
+
+		}
+		for _, product := range products {
+			if (product.ID == productId) {
+				product = newProduct
+			}
+		}
+
+		jsonProduct, err := json.Marshal(newProduct)
+		if err != nil {
+
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(jsonProduct)
+		
+		
 	})
 	http.ListenAndServe(":8080", r)
 }
