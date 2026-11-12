@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: go_postgres
+    environment:
+      POSTGRES_USER: gouser
+      POSTGRES_PASSWORD: gopassword
+      POSTGRES_DB: godb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

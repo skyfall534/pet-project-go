@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -63,7 +62,6 @@ func main () {
 		var newProduct Product
 		var newProducts []Product
 		err := json.NewDecoder(r.Body).Decode(&newProduct)
-		fmt.Println(productId)
 		if err != nil {
 			
 		}
