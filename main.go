@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5"
 )
 
 type Product struct {
@@ -23,6 +25,12 @@ func main () {
 		w.Write([]byte("welcome"))
 	}) 
 	r.Get("/products", func(w http.ResponseWriter, r *http.Request) {
+		conn, err := pgx.Connect(context.Background(), "postgres://gouser:gopassword@localhost:5432/godb");
+		defer conn.Close(context.Background());
+
+		rows, err := conn.Query(context.Background(), "SELECT * FROM products");
+		products, _ := pgx.CollectRows(rows, pgx.RowToStructByName[Product])
+
 		marshalProducts, err := json.Marshal(products)
 		if err != nil {
 
@@ -32,14 +40,13 @@ func main () {
 	})
 	r.Get("/product/{id}", func(w http.ResponseWriter, r *http.Request) {
 		productId := chi.URLParam(r, "id")
-		var currProduct Product
-		for _, product := range products {
-			if (product.ID == productId) {
-				currProduct = product
-			} 
-		}
 
-		if (Product{}) == currProduct {
+		conn, err := pgx.Connect(context.Background(), "postgres://gouser:gopassword@localhost:5432/godb");
+		defer conn.Close(context.Background());
+
+		rows, err := conn.Query(context.Background(), "select * from products where id=$1", productId);
+		product, _ := pgx.CollectOneRow(rows, pgx.RowToStructByName[Product]);
+		if (Product{}) == product {
 				notFoundMsg, err := json.Marshal("Product not found")
 				if (err != nil) {
 
@@ -49,7 +56,8 @@ func main () {
 				return
 			
 		}
-		currProductJson, err := json.Marshal(currProduct)
+
+		currProductJson, err := json.Marshal(product)
 		if (err != nil) {
 
 		}
