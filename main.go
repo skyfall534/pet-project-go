@@ -71,7 +71,6 @@ func main () {
 		var newProducts []Product
 		err := json.NewDecoder(r.Body).Decode(&newProduct)
 		if err != nil {
-			
 		}
 		for _, product := range products {
 			if (product.ID == productId) {
@@ -88,6 +87,22 @@ func main () {
 		w.WriteHeader(http.StatusOK)
 		w.Write(jsonProduct)
 
+	})
+	r.Post("/product", func (w http.ResponseWriter, r *http.Request) {
+		conn, err := pgx.Connect(context.Background(), "postgres://gouser:gopassword@localhost:5432/godb")
+		if err != nil {}
+		defer conn.Close(context.Background());
+
+		var newProduct Product
+		err1 := json.NewDecoder(r.Body).Decode(&newProduct);
+		if err1 != nil {
+			
+		}
+
+		conn.Exec(context.Background(), "insert into products (name, description, id) values ($1, $2, $3)", newProduct.Name, newProduct.Description, newProduct.ID)
+		if (err != nil) {}
+		jsonProduct, err := json.Marshal(newProduct)
+		w.Write(jsonProduct)
 	})
 	http.ListenAndServe(":8080", r)
 }
