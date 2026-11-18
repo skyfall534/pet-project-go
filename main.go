@@ -16,6 +16,11 @@ type Product struct {
 	ID string `json:"id"`
 }
 
+type ProductPut struct {
+	Name string `json:"name"`
+	Description string `json:"description"`
+}
+
 var products = []Product{{Name: "apple", Description: "its an apple", ID: "1"}, {Name: "banana", Description: "its an banana", ID: "2"}, {Name: "orange", Description: "its an orange", ID: "3"}}
 
 func main () {
@@ -54,7 +59,6 @@ func main () {
 				w.WriteHeader(http.StatusNotFound)
 				w.Write(notFoundMsg)
 				return
-			
 		}
 
 		currProductJson, err := json.Marshal(product)
@@ -64,29 +68,6 @@ func main () {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(currProductJson)
-	})
-	r.Put("/product/{id}", func (w http.ResponseWriter, r *http.Request) {
-		productId := chi.URLParam(r, "id")
-		var newProduct Product
-		var newProducts []Product
-		err := json.NewDecoder(r.Body).Decode(&newProduct)
-		if err != nil {
-		}
-		for _, product := range products {
-			if (product.ID == productId) {
-				newProducts = append(newProducts, newProduct)
-			} else {
-				newProducts = append(newProducts, product)
-			}
-		}
-		products = newProducts
-		jsonProduct, err := json.Marshal(newProduct)
-		if err != nil {
-
-		}
-		w.WriteHeader(http.StatusOK)
-		w.Write(jsonProduct)
-
 	})
 	r.Post("/product", func (w http.ResponseWriter, r *http.Request) {
 		conn, err := pgx.Connect(context.Background(), "postgres://gouser:gopassword@localhost:5432/godb")
@@ -103,6 +84,25 @@ func main () {
 		if (err != nil) {}
 		jsonProduct, err := json.Marshal(newProduct)
 		w.Write(jsonProduct)
+	})
+	r.Put("/product/{id}", func (w http.ResponseWriter, r *http.Request) {
+		productId := chi.URLParam(r, "id");
+		var newProduct ProductPut;
+		err := json.NewDecoder(r.Body).Decode(&newProduct)
+		if err != nil {}
+		conn, err := pgx.Connect(context.Background(), "postgres://gouser:gopassword@localhost:5432/godb")
+		if err != nil {}
+		defer conn.Close(context.Background());
+		conn.Exec(context.Background(), "update products set name=$1, description=$2 where id=$3", newProduct.Name, newProduct.Description, productId)
+		jsonProduct, err := json.Marshal(&newProduct)
+		w.Write(jsonProduct)
+	})
+	r.Delete("/product/{id}", func (w http.ResponseWriter, r *http.Request) {
+		productId := chi.URLParam(r, "id")
+		conn, err := pgx.Connect(context.Background(), "postgres://gouser:gopassword@localhost:5432/godb")
+		if err != nil {}
+		defer conn.Close(context.Background());
+		conn.Exec(context.Background(), "delete from products where id=$1", productId)
 	})
 	http.ListenAndServe(":8080", r)
 }
